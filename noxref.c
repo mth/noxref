@@ -208,7 +208,6 @@ static int prepare_http(int fd, char *buf) {
 		return ERR_NO_HOST;
 	host[host_len] = 0;
 	if (referer && no_referer_match(host, referer)) {
-		// XXX probably should allow all with .eu/.ee referer or host
 		if (path_len > 3 && !memcmp(path + path_len - 3, ".js", 3)) {
 			syslog(LOG_DEBUG | LOG_DAEMON, "refused: %s", host);
 			return ERR_REFUSED; // javascript cross-reference
