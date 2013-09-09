@@ -284,7 +284,7 @@ static void write_error(char *buf, int fd, int error) {
 	full_write(fd, buf, strlen(buf));
 }
 
-static int poll_fds(char *buf, int type, struct pollfd *in, int out_fd) {
+static int send_data(char *buf, int type, struct pollfd *in, int out_fd) {
 	int i, n;
 	n = read(in->fd, buf, BUF_SIZE);
 	if (!n && type == CLIENT) {
@@ -314,7 +314,7 @@ static void* process_connection(void *arg) {
 			break;
 		for (i = 0; res > 0 && i < 2; ++i)
 			if ((fds[i].revents & POLL_IN))
-				res = poll_fds(buf, i, fds + i, fds[i ^ 1].fd);
+				res = send_data(buf, i, fds + i, fds[i ^ 1].fd);
 			else if ((fds[i].revents & (POLLERR | POLLHUP)))
 				res = ERR_IO;
 	}
