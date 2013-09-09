@@ -36,8 +36,8 @@
 
 #define CLIENT	0
 #define SERVER	1
-#define BUF_SIZE		0x3800
-#define MAX_HEADERS_SIZE	0x3400
+#define BUF_SIZE		0x5800
+#define MAX_HEADERS_SIZE	0x5400
 
 #define ERR_IO		-1
 #define ERR_WRITE       -2
