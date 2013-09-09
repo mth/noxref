@@ -352,7 +352,7 @@ hell:
 	return -1;
 }
 
-static void accept_connections() {
+static int accept_connections() {
 	pthread_attr_t pta;
 	pthread_t th;
 	long fd;
@@ -361,12 +361,12 @@ static void accept_connections() {
 	pthread_attr_init(&pta);
 	pthread_attr_setdetachstate(&pta, PTHREAD_CREATE_DETACHED);
 	if ((sock = listen_socket()) < 0)
-		exit(1);
+		return 1;
 	while ((fd = accept(sock, NULL, NULL)) >= 0)
 		if (pthread_create(&th, &pta, process_connection, (void*) fd))
 			close(fd);
 	syslog(LOG_ERR | LOG_DAEMON, "accept: %s", strerror(errno));
-	exit(1);
+	return 1;
 }
 
 static void read_conf() {
@@ -416,6 +416,5 @@ int main(int argc, char **argv) {
 	read_conf();
 	setgid(use_gid);
 	setuid(use_uid);
-	accept_connections();
-	return 0;
+	return accept_connections();
 }
