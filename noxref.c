@@ -56,7 +56,7 @@ typedef struct hostname {
 
 static hostname whitelist;
 static struct in_addr listen_addr;
-static int listen_port = 3128;
+static int listen_port = 880;
 static int use_uid = 65534;
 static int use_gid = 65534;
 static struct timeval recv_timeout = { 1, 0 };
@@ -180,17 +180,7 @@ static int prepare_http(int fd, char *buf) {
 	buf[hdr_size + 2] = 0; // "\r\n\r\n" -> "\r\n\0\n"
 	if (!(path = strpbrk(buf, " \r\n")))
 		return ERR_BAD_REQ;
-	if (!strncmp(++path, "http://", 7) &&
-	    (p = strpbrk(path + 7, "/ \r\n")) && *p == '/') {
-		move_len = size - (p - buf);
-		if (invalid(buf, path, move_len))
-			return ERR_BAD_REQ;
-		memmove(path, p, move_len);
-		len_diff = p - path;
-		size -= len_diff;
-		hdr_size -= len_diff;
-	}
-	path_len = strcspn(path, " \r\n");
+	path_len = strcspn(++path, " \r\n");
 	p = strstr(path + path_len, "\r\n");
 	while (p && (!host || !referer) && (p = strstr(h = p + 2, "\r\n")))
 		if (!strncasecmp(h, "host:", 5)) {
@@ -352,17 +342,14 @@ hell:
 	return -1;
 }
 
-static int accept_connections() {
+static int accept_connections(int listen_fd) {
 	pthread_attr_t pta;
 	pthread_t th;
 	long fd;
-	int sock;
 
 	pthread_attr_init(&pta);
 	pthread_attr_setdetachstate(&pta, PTHREAD_CREATE_DETACHED);
-	if ((sock = listen_socket()) < 0)
-		return 1;
-	while ((fd = accept(sock, NULL, NULL)) >= 0)
+	while ((fd = accept(listen_fd, NULL, NULL)) >= 0)
 		if (pthread_create(&th, &pta, process_connection, (void*) fd))
 			close(fd);
 	syslog(LOG_ERR | LOG_DAEMON, "accept: %s", strerror(errno));
@@ -413,8 +400,12 @@ static void read_conf() {
 }
 
 int main(int argc, char **argv) {
+	int listen_fd;
+
 	read_conf();
+	if ((listen_fd = listen_socket()) < 0)
+		return 1;
 	setgid(use_gid);
 	setuid(use_uid);
-	return accept_connections();
+	return accept_connections(listen_fd);
 }
