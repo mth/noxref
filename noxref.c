@@ -202,6 +202,11 @@ static int prepare_http(int fd, char *buf) {
 			syslog(LOG_DEBUG | LOG_DAEMON, "refused: %s", host);
 			return ERR_REFUSED; // javascript cross-reference
 		}
+		if (path_len > 4 && !memcmp(path + path_len - 4, ".gif", 4)
+		    && strchr(path, '?')) {
+			syslog(LOG_DEBUG | LOG_DAEMON, "refused gif: %s", host);
+			return ERR_REFUSED;
+		}
 	} else {
 		referer = NULL; // matches, don't remove
 	}
