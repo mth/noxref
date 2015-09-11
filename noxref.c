@@ -46,8 +46,18 @@
 #define ERR_BAD_REQ	-5
 #define ERR_NO_HOST	-6
 #define ERR_REFUSED	-7
-#define ERR_READ_REQ	-8
-	
+#define ERR_EMPTY_GIF	-8
+#define ERR_READ_REQ	-9
+
+static const char const empty_gif[] =
+	"HTTP/1.0 200 OK\r\n"
+	"Content-Length: 43\r\n"
+	"Content-Type: image/gif\r\n"
+	"Cache-Control: max-age=600000\r\n"
+	"\r\n"
+	"GIF89a\1\0\1\0\x80\0\0\xff\xff\xff\xff\xff\xff"
+	"!\xf9\4\1\12\0\1\0,\0\0\0\0\1\0\1\0\0\2\2L\1\0;";
+
 typedef struct hostname {
 	struct hostname *next;
 	int len;
@@ -205,7 +215,7 @@ static int prepare_http(int fd, char *buf) {
 		if (path_len > 4 && !memcmp(path + path_len - 4, ".gif", 4)
 		    && strchr(path, '?')) {
 			syslog(LOG_DEBUG | LOG_DAEMON, "refused gif: %s", host);
-			return ERR_REFUSED;
+			return ERR_EMPTY_GIF;
 		}
 	} else {
 		referer = NULL; // matches, don't remove
@@ -266,6 +276,8 @@ static void write_error(char *buf, int fd, int error) {
 		status = "200 Ok";
 		message = "";
 		break;
+	case ERR_EMPTY_GIF:
+		full_write(fd, empty_gif, sizeof empty_gif);
 	case ERR_READ_REQ:
 		return;
 	default:
