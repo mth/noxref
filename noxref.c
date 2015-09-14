@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#define _GNU_SOURCE
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -212,8 +213,7 @@ static int prepare_http(int fd, char *buf) {
 			syslog(LOG_DEBUG | LOG_DAEMON, "refused: %s", host);
 			return ERR_REFUSED; // javascript cross-reference
 		}
-		if (path_len > 4 && !memcmp(path + path_len - 4, ".gif", 4)
-		    && strchr(path, '?')) {
+		if (memmem(path, path_len, ".gif?", 5)) {
 			syslog(LOG_DEBUG | LOG_DAEMON, "refused gif: %s", host);
 			return ERR_EMPTY_GIF;
 		}
